@@ -1,0 +1,5 @@
+site_name: portfolio-yassine-cloud
+nav:
+  - Accueil: index.md
+plugins:
+  - techdocs-core

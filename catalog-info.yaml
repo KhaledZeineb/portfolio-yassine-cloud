@@ -1,0 +1,22 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: portfolio-yassine-cloud
+  title: Développeur Full Stack
+  description: Portfolio professionnel dédié à mes projets en développement web, conteneurisation Docker et automatisation CI/CD.
+  annotations:
+    github.com/project-slug: KhaledZeineb/portfolio-yassine-cloud
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - nextjs
+    - portfolio
+    - docker
+  links:
+    - url: http://localhost:3000
+      title: Application locale
+    - url: https://hub.docker.com/r/zeinebkhaled/portfolio-yassine-cloud
+      title: Image Docker Hub
+spec:
+  type: website
+  lifecycle: production
+  owner: group:default/platform-team

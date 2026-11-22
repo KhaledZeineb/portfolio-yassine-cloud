@@ -1,0 +1,17 @@
+{
+  "fullName": "Yassine Gharbi",
+  "tagline": "Cloud Computing & DevOps Engineer",
+  "about": "Bienvenue sur mon Portfolio. Cette application a été générée, construite, publiée et déployée automatiquement depuis Backstage.",
+  "email": "contact@example.com",
+  "skills": ["Docker", "Kubernetes", "CI/CD", "Linux", "Next.js"],
+  "projects": [
+    {
+      "title": "Plateforme Backstage",
+      "description": "Portail développeur pour industrialiser le cycle de vie des applications."
+    },
+    {
+      "title": "Pipeline CI/CD",
+      "description": "Build, publication Docker Hub et déploiement automatisés."
+    }
+  ]
+}

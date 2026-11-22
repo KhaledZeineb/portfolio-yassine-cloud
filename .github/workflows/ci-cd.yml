@@ -1,0 +1,97 @@
+name: ci-cd
+
+# Déclenché par un push sur main OU depuis Backstage (template "Publier une nouvelle version")
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version de l image (ex. v2, v1.1). Vide = automatique'
+        required: false
+        default: ''
+
+env:
+  IMAGE: zeinebkhaled/portfolio-yassine-cloud
+
+jobs:
+  build-and-push:
+    name: Build + Push Docker Hub
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      - name: Calcul de la version
+        id: ver
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            V="${{ github.event.inputs.version }}"
+          else
+            V="v${{ github.run_number }}"
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "Version retenue : $V"
+
+      - name: Build de l application (contrôle qualité)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install && npm run build
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Authentification Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build et push de l image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: APP_VERSION=${{ steps.ver.outputs.version }}
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.ver.outputs.version }}
+            ${{ env.IMAGE }}:latest
+
+  deploy-local:
+    name: Déploiement local + health check
+    needs: build-and-push
+    # Runner auto-hébergé installé sur la machine qui exécute Docker
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Mise à jour du déploiement
+        env:
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.version }}
+        run: |
+          docker compose pull
+          docker compose up -d --remove-orphans
+
+      - name: Vérification de santé
+        env:
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.version }}
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/api/health; then
+              echo
+              echo "Application saine"
+              {
+                echo "### Déploiement réussi"
+                echo "- Image : \`${{ env.IMAGE }}:$IMAGE_TAG\`"
+                echo "- URL : http://localhost:3000"
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Health check en échec"
+          docker compose logs --tail=50
+          exit 1
+
